@@ -285,16 +285,16 @@ class ApiHandler:
         else:
             print(response.text)
             return None        
-    #def add_range(self,name,subnet,mask_length):
+    def add_range(self,name,address_first,address_last):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name":name, "subnet":subnet, "mask-length":mask_length}
+        data = {"name":name, "ip-address-first":address_first, "ip-address-last":address_last}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/add-network"
+        api_endpoint = self.endpoint + "/add-address-range"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
         response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
@@ -302,24 +302,24 @@ class ApiHandler:
         else:
             print(response.text)
             return False
-    #def set_range(self,name,subnet=None,mask_length=None,new_name=None,color=None):
+    def set_range(self,name,address_first=None,address_last=None,new_name=None,color=None):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
         data = {"name" : name}
-        if subnet!=None:
-            data["subnet"]=subnet
-        if mask_length!=None:
-            data["mask-length"]=mask_length
+        if address_first!=None:
+            data["ip-address-first"]=address_first
+        if address_last!=None:
+            data["ip-address-last"]=address_last
         if color!=None:
             data["color"]=color
         if new_name!=None:
             data["new-name"]=new_name
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/set-network"
+        api_endpoint = self.endpoint + "/set-address-range"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
         response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
@@ -380,16 +380,18 @@ class ApiHandler:
         else:
             print(response.text)
             return None        
-    #def add_group(self,name,subnet,mask_length):
+    def add_group(self,name,members=None):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name":name, "subnet":subnet, "mask-length":mask_length}
+        data = {"name":name}
+        if members!=None:
+            data["members"]=members
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/add-network"
+        api_endpoint = self.endpoint + "/add-group"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
         response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
@@ -397,24 +399,22 @@ class ApiHandler:
         else:
             print(response.text)
             return False
-    #def set_group(self,name,subnet=None,mask_length=None,new_name=None,color=None):
+    def set_group(self,name,members=None,new_name=None,color=None):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
         data = {"name" : name}
-        if subnet!=None:
-            data["subnet"]=subnet
-        if mask_length!=None:
-            data["mask-length"]=mask_length
+        if members!=None:
+            data["members"]=members
         if color!=None:
             data["color"]=color
         if new_name!=None:
             data["new-name"]=new_name
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/set-network"
+        api_endpoint = self.endpoint + "/set-group"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
         response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
@@ -450,14 +450,18 @@ if mgmt.login("king","passport"):
 #if mgmt.set_host("h_2",color="brown",new_name="petko"):
 #    print("Changed to Green h_2")
 
-print(mgmt.get_all_groups())
-print (mgmt.get_group("babinite_checkpointcheta"))
-if mgmt.delete_group("babinite_checkpointcheta"):
-    print("Deleted")
-#if mgmt.add_network("dcservice_net","10.10.10.0","24"):
-#    print("Network added")
-#if mgmt.set_network("gho2_net",subnet="10.20.30.128", mask_length="25",color="green",new_name="gho3_net"):
+#print(mgmt.get_all_groups())
+#print (mgmt.get_group("babinite_checkpointcheta"))
+#if mgmt.delete_group("babinite_checkpointcheta"):
+#    print("Deleted")
+#if mgmt.add_range("cp_per_range2","10.10.10.34","10.10.10.60"):
+#    print("Added")
+#if mgmt.set_range("cp_per_range",address_first="10.20.30.34", address_last="10.20.30.124",color="green",new_name="cp_per_range12"):
 #    print("Changed Network")
+#mgmt.add_host("node1","10.10.44.5")
+#mgmt.add_host("node2","10.10.44.6")
+#mgmt.add_host("node3","10.10.44.7")
+mgmt.set_group("nasko2_grp",members=["node2","node3"],new_name="nasko3_grp",color="green")
 if mgmt.publish():
     print("Published")
 if mgmt.logout():
