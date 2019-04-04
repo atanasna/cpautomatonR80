@@ -1,20 +1,21 @@
 import requests
 import json
-# defining the api-endpoint  
-
+  
+# This class provides direct access to the checkpoint API
+# It always returns the raw JSON result from the api response
 class CpApiConnector:
     def __init__(self, endpoint):
-        self.endpoint = endpoint
+        self.__endpoint = endpoint
 
-    # Session Endpoints
+    # Session __endpoints
     def login(self, user, password):
         # Setting the POST data
         data = {"user":user,"password":password}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/login"
+        api___endpoint = self.__endpoint + "/login"
         headers = {'Content-type': 'application/json'}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             self.sid = response.json()['sid']
             self.isLoggedIn = True
@@ -31,16 +32,16 @@ class CpApiConnector:
         data = {}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/logout"
+        api___endpoint = self.__endpoint + "/logout"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             self.sid = None
             self.isLoggedIn = False
             return True
         else:
             print(response.text)
-            return False
+            return False        
     def publish(self):
         # Initial checks
         if not self.isLoggedIn:
@@ -50,9 +51,9 @@ class CpApiConnector:
         data = {}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/publish"
+        api___endpoint = self.__endpoint + "/publish"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return True
         else:
@@ -60,18 +61,18 @@ class CpApiConnector:
             return False
 
     # Host Enpoints
-    def get_host(self, name):
+    def get_host(self, uid):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name" : name}
+        data = {"uid" : uid}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/show-host"
+        api___endpoint = self.__endpoint + "/show-host"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return response.json()
         else:
@@ -83,12 +84,12 @@ class CpApiConnector:
             return False
         #
         # Setting the POST data
-        data = {}
+        data = {"details-level":"full"}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/show-hosts"
+        api___endpoint = self.__endpoint + "/show-hosts"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return response.json()
         else:
@@ -105,21 +106,21 @@ class CpApiConnector:
             data["ipv6-address"]=ipv6_address
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/add-host"
+        api___endpoint = self.__endpoint + "/add-host"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return True
         else:
             print(response.text)
             return False
-    def set_host(self, name, address=None, new_name=None, color=None):
+    def update_host(self, uid, address=None, new_name=None, color=None):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name" : name}
+        data = {"uid" : uid}
         if address!=None:
             data["ip-address"]=address
         if color!=None:
@@ -128,26 +129,26 @@ class CpApiConnector:
             data["new-name"]=new_name
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/set-host"
+        api___endpoint = self.__endpoint + "/set-host"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return True
         else:
             print(response.text)
             return False
-    def delete_host(self,name):
+    def delete_host(self,uid):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name" : name}
+        data = {"uid" : uid}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/delete-host"
+        api___endpoint = self.__endpoint + "/delete-host"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return True
         else:
@@ -155,18 +156,18 @@ class CpApiConnector:
             return False
 
     # Network Enpoints
-    def get_network(self,name):
+    def get_network(self,uid):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name" : name}
+        data = {"uid" : uid}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/show-network"
+        api___endpoint = self.__endpoint + "/show-network"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return response.json()
         else:
@@ -178,18 +179,18 @@ class CpApiConnector:
             return False
         #
         # Setting the POST data
-        data = {}
+        data = {"details-level":"full"}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/show-networks"
+        api___endpoint = self.__endpoint + "/show-networks"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return response.json()
         else:
             print(response.text)
             return None        
-    def add_network(self,name,subnet,mask_length):
+    def add_network(self, name,subnet,mask_length):
         # Initial checks
         if not self.isLoggedIn:
             return False
@@ -198,21 +199,21 @@ class CpApiConnector:
         data = {"name":name, "subnet":subnet, "mask-length":mask_length}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/add-network"
+        api___endpoint = self.__endpoint + "/add-network"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return True
         else:
             print(response.text)
             return False
-    def set_network(self,name,subnet=None,mask_length=None,new_name=None,color=None):
+    def update_network(self,uid,subnet=None,mask_length=None,new_name=None,color=None):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name" : name}
+        data = {"uid" : uid}
         if subnet!=None:
             data["subnet"]=subnet
         if mask_length!=None:
@@ -223,45 +224,45 @@ class CpApiConnector:
             data["new-name"]=new_name
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/set-network"
+        api___endpoint = self.__endpoint + "/set-network"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return True
         else:
             print(response.text)
             return False
-    def delete_network(self,name):
+    def delete_network(self,uid):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name" : name}
+        data = {"uid" : uid}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/delete-network"
+        api___endpoint = self.__endpoint + "/delete-network"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return True
         else:
             print(response.text)
             return False
     
-    # Range Endpoints
-    def get_range(self,name):
+    # Range __endpoints
+    def get_range(self,uid):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name" : name}
+        data = {"uid" : uid}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/show-address-range"
+        api___endpoint = self.__endpoint + "/show-address-range"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return response.json()
         else:
@@ -273,12 +274,12 @@ class CpApiConnector:
             return False
         #
         # Setting the POST data
-        data = {}
+        data = {"details-level":"full"}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/show-address-ranges"
+        api___endpoint = self.__endpoint + "/show-address-ranges"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return response.json()
         else:
@@ -293,21 +294,21 @@ class CpApiConnector:
         data = {"name":name, "ip-address-first":address_first, "ip-address-last":address_last}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/add-address-range"
+        api___endpoint = self.__endpoint + "/add-address-range"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return True
         else:
             print(response.text)
             return False
-    def set_range(self,name,address_first=None,address_last=None,new_name=None,color=None):
+    def update_range(self,uid,address_first=None,address_last=None,new_name=None,color=None):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name" : name}
+        data = {"uid" : uid}
         if address_first!=None:
             data["ip-address-first"]=address_first
         if address_last!=None:
@@ -318,45 +319,45 @@ class CpApiConnector:
             data["new-name"]=new_name
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/set-address-range"
+        api___endpoint = self.__endpoint + "/set-address-range"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return True
         else:
             print(response.text)
             return False
-    def delete_range(self,name):
+    def delete_range(self,uid):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name" : name}
+        data = {"uid" : uid}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/delete-address-range"
+        api___endpoint = self.__endpoint + "/delete-address-range"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return True
         else:
             print(response.text)
             return False
     
-    # Group Endpoints
-    def get_group(self,name):
+    # Group __endpoints
+    def get_group(self,uid):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name" : name}
+        data = {"uid" : uid}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/show-group"
+        api___endpoint = self.__endpoint + "/show-group"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return response.json()
         else:
@@ -368,12 +369,12 @@ class CpApiConnector:
             return False
         #
         # Setting the POST data
-        data = {}
+        data = {"details-level":"full"}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/show-groups"
+        api___endpoint = self.__endpoint + "/show-groups"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return response.json()
         else:
@@ -390,21 +391,21 @@ class CpApiConnector:
             data["members"]=members
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/add-group"
+        api___endpoint = self.__endpoint + "/add-group"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return True
         else:
             print(response.text)
             return False
-    def set_group(self,name,members=None,new_name=None,color=None):
+    def update_group(self,uid,members=None,new_name=None,color=None):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name" : name}
+        data = {"uid" : uid}
         if members!=None:
             data["members"]=members
         if color!=None:
@@ -413,28 +414,69 @@ class CpApiConnector:
             data["new-name"]=new_name
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/set-group"
+        api___endpoint = self.__endpoint + "/set-group"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return True
         else:
             print(response.text)
             return False
-    def delete_group(self,name):
+    def delete_group(self,uid):
         # Initial checks
         if not self.isLoggedIn:
             return False
         #
         # Setting the POST data
-        data = {"name" : name}
+        data = {"uid" : uid}
         #
         # Create & Send the request
-        api_endpoint = self.endpoint + "/delete-group"
+        api___endpoint = self.__endpoint + "/delete-group"
         headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
-        response = requests.post(url = api_endpoint, json=data, verify=False, headers=headers)
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
         if response.status_code == 200:
             return True
         else:
             print(response.text)
             return False
+
+    # Misc
+    def get_object(self,uid):
+        # Initial checks
+        if not self.isLoggedIn:
+            return False
+        #
+        # Setting the POST data
+        data = {"uid" : uid}
+        #
+        # Create & Send the request
+        api___endpoint = self.__endpoint + "/show-object"
+        headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(response.text)
+            return None
+    def get_unused_objects(self):
+        # Initial checks
+        if not self.isLoggedIn:
+            return False
+        #
+        # Setting the POST data
+        data = {}
+        #
+        # Create & Send the request
+        api___endpoint = self.__endpoint + "/show-unused-objects"
+        headers = {'Content-type': 'application/json', 'X-chkp-sid': self.sid}
+        response = requests.post(url = api___endpoint, json=data, verify=False, headers=headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(response.text)
+            return None        
+    # Access Rules __endpoints
+    #def get_access_rule(self, uid, layer):
+    #def get_all_access_rules(self):
+    #def update_access_rule(self, uid, layer):
+    #def detele_access_rule(serf, uid, layer):
