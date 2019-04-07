@@ -146,7 +146,7 @@ class CpObjectsHandler:
         print("--------- Objects DB")
         print("===> Hosts")
         for host in self.hosts():
-            print("    Name:" + host.name + " Color:" + host.color + " IP:" + host.address.exploded )
+            print("    Name:" + host.name + " Color:" + host.color + " IP:" + host.address.exploded + " UID:" + host.uid)
         print("===> Networks")
         for network in self.networks():
             print("    Name:" + network.name + " Color:" + network.color + " IP:" + network.address.exploded )

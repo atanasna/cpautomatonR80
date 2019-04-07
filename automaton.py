@@ -65,7 +65,13 @@ class Automaton:
         #self.colorize_objects()
         #self.rename_objects_by_dns()
         #self.delete_unused_objects()
-        pprint(self.__objectsHandler.find_ip_duplicated_objects())
+        #
+        #for set in self.__objectsHandler.find_ip_duplicated_objects():
+        #    pprint("------")
+        #    for el in set:
+        #        pprint(el.name)
+        #
+        self.__apiHandler.test_api_endpoint()
         #self.__objectsHandler.print_objects()
 
 a = Automaton()
