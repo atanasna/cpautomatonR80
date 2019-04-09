@@ -1,19 +1,5 @@
 from CpApiHandler.CpApiConnector import *
 from pprint import pprint
-#class TestApi(unittest.TestCase):
-#    def __init__(self, *args, **kwargs):
-#        self.__config = None
-#        with open('config/config.json') as f:
-#            self.__config = json.load(f)
-#        server_ip = self.__config["api_credentials"]["address"]
-#        self.__api_connector = CpApiConnector("https://"+server_ip+"/web_api")
-#        self.__user = self.__config["api_credentials"]["username"]
-#        self.__password = self.__config["api_credentials"]["password"]
-#
-#    def test_api_login(self):
-#        sid = self.__api_connector.login(self.__user,self.__password)
-#        print sid
-#        self.assertEqual(sid, sid)
 
 config = None
 with open('config/config.json') as f:

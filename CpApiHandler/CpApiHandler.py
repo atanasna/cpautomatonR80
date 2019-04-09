@@ -14,13 +14,15 @@ class CpApiHandler:
         self.__isLoggedIn = False
         self.__apiSid = None
         self.login()
-
     def __del__(self):
         self.logout()
 
     def login(self):
         self.__apiSid = self.__api_connector.login(self.__user,self.__password)["sid"]
         self.__isLoggedIn = True
+        # The following thread needs to be opened because the login session has to be open for the full duration of the script. 
+        # This means that sometihng has to send keepalives to the Mgmt Servers
+        # The thread is closed in the logout method
         self.keepalive_thread = Thread(target=self.keepalive)
         self.keepalive_thread.start()
     def logout(self):
@@ -31,17 +33,17 @@ class CpApiHandler:
     def keepalive(self):
         while self.__isLoggedIn:
             print self.__isLoggedIn
-            time.sleep(5)
+            time.sleep(10)
             self.__api_connector.keepalive(self.__apiSid)
 
     # Object Getters
     def get_net_objects(self):
-        
         objects = dict()
         objects["hosts"] = list()
         objects["networks"] = list()
         objects["ranges"] = list()
         objects["groups"] = list()
+
         for host in self.__api_connector.get_all_hosts(self.__apiSid)["objects"]:
             objects["hosts"].append(self.__api_connector.get_host(self.__apiSid, host["uid"]))
         for network in self.__api_connector.get_all_networks(self.__apiSid)["objects"]:
@@ -67,10 +69,10 @@ class CpApiHandler:
 
         return unused_objects    
 
-    # Object Manipulation
-    def change_object_color(self, uid, new_color):   
-        result = None
-        obj = self.__api_connector.get_object(self.__apiSid, uid)["object"]
+    # Object Manipulation >=================================================================================
+    def change_object_color(self, obj_uid, new_color):   
+        result = False
+        obj = self.__api_connector.get_object(self.__apiSid, obj_uid)["object"]
 
         if obj["type"] == "host":
             self.__api_connector.update_host(self.__apiSid, obj["uid"], color=new_color)
@@ -85,13 +87,14 @@ class CpApiHandler:
             self.__api_connector.update_group(self.__apiSid, obj["uid"], color=new_color)
             result = True
         else:
+            print "Please specify network object"
             result = False
         self.__api_connector.publish(self.__apiSid)
 
         return result
-    def change_object_name(self, uid, new_name):
+    def change_object_name(self, obj_uid, new_name):
         result = None
-        obj = self.__api_connector.get_object(self.__apiSid, uid)["object"]
+        obj = self.__api_connector.get_object(self.__apiSid, obj_uid)["object"]
         
         if obj["type"] == "host":
             self.__api_connector.update_host(self.__apiSid, obj["uid"],new_name=new_name)
@@ -106,32 +109,145 @@ class CpApiHandler:
             self.__api_connector.update_group(self.__apiSid, obj["uid"],new_name=new_name)
             result = True
         else:
+            print "Please specify network object"
             result = False
 
         self.__api_connector.publish(self.__apiSid)
 
         return result
-    def delete_object(self,uid):
+    def delete_object(self, obj_uid):
         result = None
-        obj = self.__api_connector.get_object(uid)["object"]
+        obj = self.__api_connector.get_object(obj_uid)["object"]
         
         if obj["type"] == "host":
-            self.__api_connector.delete_host(uid)
+            self.__api_connector.delete_host(obj_uid)
             result = True
         elif obj["type"] == "network":
-            self.__api_connector.delete_network(uid)
+            self.__api_connector.delete_network(obj_uid)
             result = True
         elif obj["type"] == "address-range":
-            self.__api_connector.delete_range(uid)
+            self.__api_connector.delete_range(obj_uid)
             result = True
         elif obj["type"] == "group":
-            self.__api_connector.delete_group(uid)
+            self.__api_connector.delete_group(obj_uid)
             result = True
         else:
+            print "Please specify network object"
             result = False
 
         self.__api_connector.publish(self.__apiSid)
         return result    
+
+    # Rules Manipulation >=================================================================================
+    def replace_object_in_access_rule(self, layer_uid, rule_uid, focus_obj_uid, replacement_obj_uid):
+        #def update_access_rule(self, sid, layer_uid, rule_uid, action=None, new_name=None, enabled=None, add_srcs=list(), rem_srcs=list(), add_dsts=list(), rem_dsts=list(), add_services=list(), rem_services=list(),comments=None)
+        rule = self.__api_connector.get_access_rule(self.__apiSid, layer_uid, rule_uid)
+
+        for source in rule["source"]:
+            if source["uid"] == focus_obj_uid:
+                self.__api_connector.update_access_rule(self.__apiSid, layer_uid, rule_uid, rem_srcs=[focus_obj_uid])
+                self.__api_connector.update_access_rule(self.__apiSid, layer_uid, rule_uid, add_srcs=[replacement_obj_uid])
+                break
+        for destination in rule["destination"]:
+            if destination["uid"] == focus_obj_uid:
+                self.__api_connector.update_access_rule(self.__apiSid, layer_uid, rule_uid, rem_dsts=[focus_obj_uid])
+                self.__api_connector.update_access_rule(self.__apiSid, layer_uid, rule_uid, add_dsts=[replacement_obj_uid])
+                break
+        self.__api_connector.publish(self.__apiSid)
+    def replace_object_in_access_layer(self, layer_uid, focus_obj_uid, replacement_obj_uid ):
+        layer_rulebase_sections =  self.__api_connector.get_access_rulebase(self.__apiSid, layer_uid)["rulebase"]
+        for section in layer_rulebase_sections:
+            for rule in section["rulebase"]:
+                self.replace_object_in_access_rule(layer_uid, rule["uid"], focus_obj_uid, replacement_obj_uid)
+    def replace_object_in_nat_rule(self, package_uid, nat_rule_uid, focus_obj_uid, replacement_obj_uid):
+        rule = self.__api_connector.get_nat_rule(self.__apiSid, package_uid, nat_rule_uid)
+        if rule["original-source"]["uid"] == focus_obj_uid:
+            self.__api_connector.update_nat_rule(self.__apiSid, package_uid, nat_rule_uid, o_src=replacement_obj_uid)
+        if rule["original-destination"]["uid"] == focus_obj_uid:
+            self.__api_connector.update_nat_rule(self.__apiSid, package_uid, nat_rule_uid, o_dst=replacement_obj_uid)
+        if rule["translated-source"]["uid"] == focus_obj_uid:
+            self.__api_connector.update_nat_rule(self.__apiSid, package_uid, nat_rule_uid, t_src=replacement_obj_uid)
+        if rule["translated-destination"]["uid"] == focus_obj_uid:
+            self.__api_connector.update_nat_rule(self.__apiSid, package_uid, nat_rule_uid, t_dst=replacement_obj_uid)
+        self.__api_connector.publish(self.__apiSid)
+    def replace_object_in_nat_layer(self, package_uid, focus_obj_uid, replacement_obj_uid):
+        package_nat_rulebase_sections =  self.__api_connector.get_nat_rulebase(self.__apiSid, package_uid)["rulebase"]
+        for section in package_nat_rulebase_sections:
+            for nat_rule in section["rulebase"]:
+                self.replace_object_in_nat_rule(package_uid, nat_rule["uid"], focus_obj_uid, replacement_obj_uid)
+    #def replace_object_in_thread_rule(self, focus_obj_uid, replacement_obj_uid, layer_uid, rule_uid):
+    #    pass    
+    #def replace_object_in_thread_layer(self, focus_obj_uid, replacement_obj_uid, layer_uid):
+    #    pass
+    #def replace_object_in_objectsdb(self, focus_obj_uid, replacement_obj_uid):
+    #    pass
+
+    def delete_access_rule(self, layer_uid, rule_uid):
+        self.__api_connector.delete_access_rule(self.__apiSid, layer_uid, rule_uid)
+    def delete_nat_rule(self, package, rule_uid):
+        self.__api_connector.delete_nat_rule(self.__apiSid, pakcage, rule_uid)
+
+    def delete_unused_access_rules_in_layer(self, layer_uid):
+        # The API doesnt allow you to leave a policy with no rules
+        # Thus if all rules have 0 hits at least one should be left undeleted
+        # The delete counter assures that the last rule will be left, in case all others have to be deleted.
+
+        deleted = 0;
+        layer_rulebase = self.__api_connector.get_access_rulebase(self.__apiSid, layer_uid)
+        for rule_entry in layer_rulebase["rulebase"]:
+            if deleted < layer_rulebase["total"]-1:
+                if rule_entry["type"]=="access-section":
+                    for rule in rule_entry["rulebase"]:
+                        if rule["hits"]["value"]==0:
+                            self.__api_connector.delete_access_rule(self.__apiSid, layer_uid, rule["uid"])
+                            deleted += 1
+                if rule_entry["type"]=="access-rule":
+                    if rule_entry["hits"]["value"]==0:
+                            self.__api_connector.delete_access_rule(self.__apiSid, layer_uid, rule_entry["uid"])
+                            deleted += 1
+            
+        self.__api_connector.publish(self.__apiSid)
+    def delete_unused_access_rules_in_package(self, package_uid):
+        access_layers = self.__api_connector.get_package(self.__apiSid, package_uid)["access-layers"]
+        for layer in access_layers:
+            self.delete_unused_access_rules_in_layer(layer["uid"])
+        self.__api_connector.publish(self.__apiSid)
+    #not tested
+    def delete_unused_access_rules_in_policy(self):
+        layers = self.__api_connector.get_all_access_layers(self.__apiSid)["access-layers"]    
+        for layer in layers:
+            self.delete_unused_access_rules_in_layer(layer["uid"])
+        self.__api_connector.publish(self.__apiSid)
+
+    def delete_disabled_access_rules_in_layer(self, layer_uid):
+        # The API doesnt allow you to leave a policy with no rules
+        # Thus if all rules are disabled at least one should be left undeleted
+        # The delete counter assures that the last rule will be left, in case all others have to be deleted.
+        deleted = 0;
+        layer_rulebase = self.__api_connector.get_access_rulebase(self.__apiSid, layer_uid)
+        for rule_entry in layer_rulebase["rulebase"]:
+            if deleted < layer_rulebase["total"]-1:
+                if rule_entry["type"]=="access-section":
+                    for rule in rule_entry["rulebase"]:
+                        if not rule["enabled"]:
+                            self.__api_connector.delete_access_rule(self.__apiSid, layer_uid, rule["uid"])
+                            deleted += 1
+                if rule_entry["type"]=="access-rule":
+                    if not rule_entry["enabled"]:
+                            self.__api_connector.delete_access_rule(self.__apiSid, layer_uid, rule_entry["uid"])
+                            deleted += 1
+        self.__api_connector.publish(self.__apiSid)
+    def delete_disabled_access_rules_in_package(self, package_uid):
+        access_layers = self.__api_connector.get_package(self.__apiSid, package_uid)["access-layers"]
+        for layer in access_layers:
+            self.delete_disabled_access_rules_in_layer(layer["uid"])
+        self.__api_connector.publish(self.__apiSid)
+    #not tested
+    def delete_disabled_access_rules_in_the_policy(self):
+        layers = self.__api_connector.get_all_access_layers(self.__apiSid)["access-layers"]    
+        for layer in layers:
+            self.delete_disabled_access_rules_in_layer(layer["uid"])
+        self.__api_connector.publish(self.__apiSid)
 
     # Misc
     def push_sample_objects(self):

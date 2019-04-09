@@ -1,4 +1,5 @@
 from CpObjectsHandler.CpObjectsHandler import *
+from CpPolicyHandler.CpPolicyHandler import *
 from CpObjectsHandler.CpNetwork import *
 from CpApiHandler.CpApiHandler import *
 from pprint import pprint
@@ -9,16 +10,15 @@ import random
 class Automaton:
     def __init__(self):
         self.__apiHandler = None
-        self.__objectsHandler = None
-        self.__policyHandler = None
+        self.__objectsHandler = CpObjectsHandler()
+        self.__policyHandler = CpPolicyHandler()
         self.__config = None
 
         with open('config/config.json') as f:
             self.__config = json.load(f)
 
         self.__apiHandler = CpApiHandler(self.__config["api_credentials"]["address"], self.__config["api_credentials"]["username"], self.__config["api_credentials"]["password"])
-        self.__objectsHandler = CpObjectsHandler()
-        self.__objectsHandler.load(self.__apiHandler.get_net_objects())
+        #self.__objectsHandler.load(self.__apiHandler.get_net_objects())
 
     # The following method changes the color of all network objects based on the the setting under the __config/__config.json file @subnets and @color_mapping
     def colorize_objects(self):
@@ -60,7 +60,7 @@ class Automaton:
     #def delete_duplicated_objects(self):
 
     def test(self):
-        self.__objectsHandler.print_objects()
+        #self.__objectsHandler.print_objects()
         #self.__apiHandler.push_sample_objects()
         #self.colorize_objects()
         #self.rename_objects_by_dns()
@@ -71,8 +71,26 @@ class Automaton:
         #    for el in set:
         #        pprint(el.name)
         #
-        self.__apiHandler.test_api_endpoint()
+        #self.__apiHandler.test_api_endpoint()
         #self.__objectsHandler.print_objects()
 
+        package_uid = "f1a504c3-9f99-4bac-b21a-2fc05b9e4510" #Corporate_policy
+        layer_uid = "03f9a30f-2e0a-402f-aa35-5dbb059f7cd8" #Network
+        #rule_uid = "85c0f50f-6d8a-4528-88ab-5fb11d8fe16c",
+        #focus_uid = "095915f6-4499-4ce2-8eda-c5af6eab0b1c"
+        #repl_uid = "dd944cca-5d65-49e8-abb3-211438bbe521"
+        #self.__apiHandler.replace_object_in_nat_rule(package_uid, rule_id, focus_uid, repl_uid)
+        #tested
+        #self.__apiHandler.delete_unused_access_rules_in_layer(layer_uid)
+        #tested
+        #self.__apiHandler.delete_unused_access_rules_in_package(package_uid)
+        
+        self.__apiHandler.delete_unused_access_rules_in_policy()
+        #tested
+        #self.__apiHandler.delete_disabled_access_rules_in_layer(layer_uid)
+        #tested
+        #self.__apiHandler.delete_disabled_access_rules_in_package(package_uid)
+        #tested
+        #self.__apiHandler.delete_disabled_access_rules_in_the_policy()
 a = Automaton()
 a.test()

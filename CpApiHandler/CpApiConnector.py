@@ -8,7 +8,16 @@ from pprint import pprint
 class CpApiConnector:
     def __init__(self, endpoint):
         self.__endpoint = endpoint
-
+    def __send_request(self, endpoint, data, sid=None):
+        headers = {'Content-type': 'application/json'}
+        if sid:
+            headers['X-chkp-sid'] = sid
+        response = requests.post(url = endpoint, json=data, verify=False, headers=headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception('Something went wrong with the https request\nStatus-Code:{}\nAPI-Response:{}'.format(response.status_code, response.text))
+   
     # Session Endpoints ------------------------------------------
     def login(self, user, password):
         # Setting the POST data
@@ -229,6 +238,61 @@ class CpApiConnector:
         return self.__send_request(api_endpoint, data, sid)
 
     # Policy Endpoints ------------------------------------------
+    # Package Enpoints
+    # not tested
+    def get_package(self, sid, package_uid):
+        # Setting the POST data
+        data = {"name" : package_uid }
+        #
+        # Create & Send the request
+        api_endpoint = self.__endpoint + "/show-package"
+        return self.__send_request(api_endpoint, data, sid)
+    # not tested
+    def get_all_packages(self, sid):
+        # Setting the POST data
+        data = {}
+        #
+        # Create & Send the request
+        api_endpoint = self.__endpoint + "/show-packages"
+        return self.__send_request(api_endpoint, data, sid)
+    # not tested
+    def add_package(self, sid, name, access=True, qos=False, thread=False):
+        # Setting the POST data
+        data = dict()
+        data["name"] = name
+        data["access"] = access
+        data["qos"] = qos
+        data["threat-prevention"] = thread
+        #
+        # Create & Send the request
+        api_endpoint = self.__endpoint + "/add-package"
+        return self.__send_request(api_endpoint, data, sid)
+    # not tested
+    def update_package(self, sid, package_uid, new_name=None, access=None, qos=None, thread=None):
+        # Setting the POST data
+        data = {"uid" : package_uid} 
+        if new_name!=None:
+            data["new-name"] = new_name
+        if access==True or access==False:
+            data["access"] = access  
+        if qos==True or qos==False:
+            data["qos"] = qos
+        if thread==True or thread==False:
+            data["threat-prevention"] = thread
+
+        #
+        # Create & Send the request
+        api_endpoint = self.__endpoint + "/set-package"
+        return self.__send_request(api_endpoint, data, sid)
+    # not tested
+    def delete_package(self, sid, package_uid):
+        # Setting the POST data
+        data = {"uid" : package_uid}
+        #
+        # Create & Send the request
+        api_endpoint = self.__endpoint + "/delete-package"
+        return self.__send_request(api_endpoint, data, sid)
+
     # AccessLayers Enpoints
     def get_access_layer(self, sid, layer_uid):
         # Setting the POST data
@@ -236,6 +300,14 @@ class CpApiConnector:
         #
         # Create & Send the request
         api_endpoint = self.__endpoint + "/show-access-layer"
+        return self.__send_request(api_endpoint, data, sid)
+    # not tested
+    def get_all_access_layers(self, sid):
+        # Setting the POST data
+        data = {}
+        #
+        # Create & Send the request
+        api_endpoint = self.__endpoint + "/show-access-layers"
         return self.__send_request(api_endpoint, data, sid)
     def add_access_layer(self, sid, name, firewall=True, url_filtering=False, content_awareness=False, mobile=False, shared=False):
         # Setting the POST data
@@ -278,12 +350,22 @@ class CpApiConnector:
         return self.__send_request(api_endpoint, data, sid)
     
     # AccessRules Endpoins
-    def get_access_rule(self, sid, layer_uid, rule_uid):
+    def get_access_rule(self, sid, layer_uid, rule_uid, hits=True):
         # Setting the POST data
         data = {"uid" : rule_uid, "layer" : layer_uid}
+        if hits:
+            data["show-hits"] = True
         #
         # Create & Send the request
         api_endpoint = self.__endpoint + "/show-access-rule"
+        return self.__send_request(api_endpoint, data, sid)
+    #not tested
+    def get_access_rulebase(self, sid, layer_uid, hits=True, filter=""):
+        # Setting the POST data
+        data = {"name" : layer_uid, "show-hits":hits, "filter" : filter}
+        #
+        # Create & Send the request
+        api_endpoint = self.__endpoint + "/show-access-rulebase"
         return self.__send_request(api_endpoint, data, sid)
     def add_access_rule(self, sid, layer_uid, position="top", name=None, action="Accept", enabled=True, sources=list(), destinations=list(), services=list(), comments=None):
         # Setting the POST data
@@ -348,17 +430,25 @@ class CpApiConnector:
         return self.__send_request(api_endpoint, data, sid)
 
     # NatRules Endpoints
-    def get_nat_rule(self, sid, package, nat_rule_uid):
+    def get_nat_rule(self, sid, package_uid, nat_rule_uid):
         # Setting the POST data
-        data = {"uid" : nat_rule_uid, "package" : package}
+        data = {"uid" : nat_rule_uid, "package" : package_uid}
         #
         # Create & Send the request
         api_endpoint = self.__endpoint + "/show-nat-rule"
         return self.__send_request(api_endpoint, data, sid)
-    def add_nat_rule(self, sid, package, position="bottom", enabled=False, o_src="Any", o_dst="Any", o_service="Any", t_src="Original", t_dst="Original", t_service="Original",comment=""):
+    #not tested
+    def get_nat_rulebase(self, sid, package_uid, filter=""):
+        # Setting the POST data
+        data = {"package" : package_uid, "filter":filter}
+        #
+        # Create & Send the request
+        api_endpoint = self.__endpoint + "/show-nat-rulebase"
+        return self.__send_request(api_endpoint, data, sid)
+    def add_nat_rule(self, sid, package_uid, position="bottom", enabled=False, o_src="Any", o_dst="Any", o_service="Any", t_src="Original", t_dst="Original", t_service="Original",comment=""):
         # Setting the POST data
         data = dict()
-        data["package"] = package
+        data["package"] = package_uid
         data["position"] = position
         data["enabled"] = enabled
         data["original-source"] = o_src
@@ -372,10 +462,9 @@ class CpApiConnector:
         # Create & Send the request
         api_endpoint = self.__endpoint + "/add-nat-rule"
         return self.__send_request(api_endpoint, data, sid)
-    #not working
-    def update_nat_rule(self, sid, package, nat_rule_uid, position=None, enabled=None, o_src=None, o_dst=None, o_service=None, t_src=None, t_dst=None, t_service=None,comment=None):
+    def update_nat_rule(self, sid, package_uid, nat_rule_uid, position=None, enabled=None, o_src=None, o_dst=None, o_service=None, t_src=None, t_dst=None, t_service=None,comment=None):
         # Setting the POST data
-        data = {"uid" : nat_rule_uid, "package" : package}
+        data = {"uid" : nat_rule_uid, "package" : package_uid}
         if position:
             data["position"] = position
         if enabled==True or enabled==False:
@@ -398,9 +487,9 @@ class CpApiConnector:
         # Create & Send the request
         api_endpoint = self.__endpoint + "/set-nat-rule"
         return self.__send_request(api_endpoint, data, sid)
-    def delete_nat_rule(self, sid, package, nat_rule_uid):
+    def delete_nat_rule(self, sid, package_uid, nat_rule_uid):
         # Setting the POST data
-        data = {"uid" : nat_rule_uid, "package" : package}
+        data = {"uid" : nat_rule_uid, "package" : package_uid}
         #
         # Create & Send the request
         api_endpoint = self.__endpoint + "/delete-nat-rule"
@@ -414,6 +503,13 @@ class CpApiConnector:
         # Create & Send the request
         api_endpoint = self.__endpoint + "/show-object"
         return self.__send_request(api_endpoint, data, sid)
+    def get_where_used(self, sid, object_uid):
+        # Setting the POST data
+        data = {"uid":object_uid}
+        #
+        # Create & Send the request
+        api_endpoint = self.__endpoint + "/where-used"
+        return self.__send_request(api_endpoint, data, sid)     
     def get_unused_objects(self, sid):
         # Setting the POST data
         data = {}
@@ -421,24 +517,8 @@ class CpApiConnector:
         # Create & Send the request
         api_endpoint = self.__endpoint + "/show-unused-objects"
         return self.__send_request(api_endpoint, data, sid)     
-    def get_where_used(self,sid, object_uid):
-        # Setting the POST data
-        data = {"uid":object_uid}
-        #
-        # Create & Send the request
-        api_endpoint = self.__endpoint + "/where-used"
-        return self.__send_request(api_endpoint, data, sid)     
              
-    def __send_request(self, endpoint, data, sid=None):
-        headers = {'Content-type': 'application/json'}
-        if sid != None:
-            headers['X-chkp-sid'] = sid
-        response = requests.post(url = endpoint, json=data, verify=False, headers=headers)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(response.text)
-            return None      
+    
 
     # Access Rules __endpoints
     #def get_access_rule(self, uid, layer):
